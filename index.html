@@ -163,6 +163,10 @@
                         <label for="faturadoS1" class="label-text">Faturamento Realizado S1</label>
                         <input type="number" id="faturadoS1" class="input-field" placeholder="Preenchimento manual">
                     </div>
+                    <div class="mt-2 text-sm">
+                        <span class="text-indigo-300">Média de faturamento atual:</span>
+                        <span id="mediaFaturamentoAtual" class="font-bold text-white">R$ 0,00</span>
+                    </div>
                     <div class="mt-4">
                         <p class="text-indigo-200 mb-2">Progresso da Meta Anual:</p>
                         <div class="w-full progress-bar-bg rounded-full h-4">
@@ -176,7 +180,11 @@
                      <h3 class="text-xl font-bold text-yellow-300">Semestre 2 (Julho - Dezembro)</h3>
                      <p class="text-indigo-200">Valor restante para bater a meta:</p>
                      <p id="valorRestanteS2" class="text-3xl font-bold text-yellow-400">R$ 0,00</p>
-                     <p id="percentualRestanteS2" class="text-indigo-200 font-medium">(--% da meta anual)</p>
+                     <p id="percentualRestanteS2" class="text-indigo-200 font-medium mb-2">(--% da meta anual)</p>
+                     <div class="mt-2 text-sm">
+                        <span class="text-indigo-300">Média de faturamento objetiva:</span>
+                        <span id="mediaFaturamentoObjetiva" class="font-bold text-white">R$ 0,00</span>
+                    </div>
                 </div>
             </div>
         </section>
@@ -320,6 +328,8 @@
                 return { nivel: 'Impossível', cor: 'bg-red-600', texto: 'Meta muito agressiva.' };
             }
         }
+        
+        let templateAplicado = false;
 
         function calcularTudo() {
             const resultado2024 = parseFloat(document.getElementById('resultado2024').value) || 0;
@@ -347,10 +357,31 @@
                 document.getElementById('progressoS1Texto').textContent = '0%';
             }
 
+            const mediaAtual = faturadoS1 / 6;
+            document.getElementById('mediaFaturamentoAtual').textContent = formatCurrency(mediaAtual);
+
             const valorRestanteS2 = Math.max(0, meta2025 - faturadoS1);
-            const percRestanteS2 = meta2025 > 0 ? (valorRestanteS2 / meta2025) * 100 : 0;
+            const mediaObjetiva = valorRestanteS2 / 6;
+            document.getElementById('mediaFaturamentoObjetiva').textContent = formatCurrency(mediaObjetiva);
+            
             document.getElementById('valorRestanteS2').textContent = formatCurrency(valorRestanteS2);
+            const percRestanteS2 = meta2025 > 0 ? (valorRestanteS2 / meta2025) * 100 : 0;
             document.getElementById('percentualRestanteS2').textContent = `(${Math.round(percRestanteS2)}% da meta anual)`;
+
+            // Preenche o template da Seção 3 se for a primeira vez
+            let totalS3Inputs = 0;
+            document.querySelectorAll('.mes-input').forEach(input => totalS3Inputs += (parseFloat(input.value) || 0));
+
+            if (faturadoS1 > 0 && meta2025 > 0 && totalS3Inputs === 0 && !templateAplicado) {
+                 const percBaseS3 = (mediaAtual / meta2025) * 100;
+                 if (percBaseS3 > 0) {
+                    document.querySelectorAll('.mes-input').forEach(input => { 
+                        input.value = percBaseS3.toFixed(2); 
+                    });
+                    templateAplicado = true; // Marca que o template foi aplicado para não repetir
+                 }
+            }
+
 
             let totalPlanejadoPercAnual = 0;
             document.querySelectorAll('.mes-input').forEach(input => {
@@ -409,7 +440,19 @@
         
         inputIds.forEach(id => {
             const input = document.getElementById(id);
-            if (input) input.addEventListener('input', calcularTudo);
+            if(input) {
+                input.addEventListener('input', () => {
+                     // Se o usuário mexer nos inputs dos meses, desativa o template automático
+                    if(input.classList.contains('mes-input')) {
+                        templateAplicado = true;
+                    }
+                     // Se mexer nos inputs principais, permite que o template seja aplicado de novo se S3 estiver zerado
+                    if(id === 'faturadoS1' || id === 'meta2025') {
+                        templateAplicado = false;
+                    }
+                    calcularTudo();
+                });
+            }
         });
 
         savePlanBtn.addEventListener('click', () => {
