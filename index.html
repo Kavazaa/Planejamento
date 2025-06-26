@@ -219,11 +219,22 @@
                     </div>
                 </div>
                 <!-- Totalizador -->
-                <div id="totalizadorS2" class="lg:col-span-1 bg-indigo-800 p-6 rounded-lg flex flex-col justify-center items-center text-center">
-                    <h3 class="text-lg font-semibold text-yellow-300 mb-2">Projeção S2 (vs. Meta Anual)</h3>
-                    <div id="totalPlanejado" class="text-4xl font-bold text-yellow-400 transition-colors duration-300">0%</div>
-                    <p class="text-indigo-200">da meta anual</p>
-                    <div id="statusPlanejamento" class="mt-4 font-bold p-2 rounded-md transition-all duration-300">--</div>
+                <div id="totalizadorS2" class="lg:col-span-1 bg-indigo-800 p-6 rounded-lg flex flex-col justify-between items-center text-center h-full">
+                    <!-- Bloco de Planejamento S2 -->
+                    <div class="w-full">
+                        <h3 class="text-lg font-semibold text-yellow-300 mb-1">Planejamento S2</h3>
+                        <div id="totalPlanejado" class="text-4xl font-bold text-yellow-400 transition-colors duration-300">0%</div>
+                        <p class="text-indigo-200 text-sm -mt-2">da meta anual</p>
+                        <div id="statusPlanejamento" class="mt-2 font-bold p-2 rounded-md transition-all duration-300 text-sm">--</div>
+                    </div>
+                    
+                    <div class="w-full border-t border-indigo-700 my-4"></div>
+
+                    <!-- Bloco de Status Anual Projetado -->
+                    <div class="w-full">
+                        <h3 class="text-lg font-semibold text-yellow-300">Status Anual Projetado</h3>
+                        <div id="statusAnual" class="mt-1 font-bold text-xl">--</div>
+                    </div>
                 </div>
             </div>
             <div class="mt-8 text-center">
@@ -365,19 +376,35 @@
             totalPlanejadoEl.textContent = `${Math.round(totalPlanejadoPercAnual)}%`;
             const diferencaPlanejamento = totalPlanejadoPercAnual - percRestanteS2;
 
+            // Status do planejamento S2
             if (meta2025 === 0) {
-                statusPlanejamentoEl.textContent = '--';
-                statusPlanejamentoEl.className = 'mt-4 font-bold p-2 rounded-md transition-all duration-300';
+                statusPlanejamentoEl.textContent = 'Defina a meta anual';
+                statusPlanejamentoEl.className = 'mt-2 font-bold p-2 rounded-md transition-all duration-300 text-sm bg-gray-600';
             } else if (diferencaPlanejamento > 2) {
-                statusPlanejamentoEl.textContent = `+${Math.round(diferencaPlanejamento)}% acima da meta!`;
-                statusPlanejamentoEl.className = 'mt-4 font-bold p-2 rounded-md bg-yellow-500 text-white';
-            } else if (diferencaPlanejamento >= -0.01) { // -0.01 to account for float precision
-                statusPlanejamentoEl.textContent = 'Meta Batida!';
-                statusPlanejamentoEl.className = 'mt-4 font-bold p-2 rounded-md bg-green-500 text-white';
+                statusPlanejamentoEl.textContent = `+${Math.round(diferencaPlanejamento)}% acima do planejado p/ S2`;
+                statusPlanejamentoEl.className = 'mt-2 font-bold p-2 rounded-md transition-all duration-300 text-sm bg-yellow-500 text-white';
+            } else if (diferencaPlanejamento >= -0.01) {
+                statusPlanejamentoEl.textContent = 'Planejamento S2 OK';
+                statusPlanejamentoEl.className = 'mt-2 font-bold p-2 rounded-md transition-all duration-300 text-sm bg-green-500 text-white';
             } else {
-                statusPlanejamentoEl.textContent = 'Meta não batida';
-                statusPlanejamentoEl.className = 'mt-4 font-bold p-2 rounded-md bg-red-600 text-white';
+                statusPlanejamentoEl.textContent = `Faltam ${Math.round(Math.abs(diferencaPlanejamento))}% para planejar S2`;
+                statusPlanejamentoEl.className = 'mt-2 font-bold p-2 rounded-md transition-all duration-300 text-sm bg-red-600 text-white';
             }
+
+            // Status Anual Projetado
+            const statusAnualEl = document.getElementById('statusAnual');
+            const percS1 = meta2025 > 0 ? (faturadoS1 / meta2025 * 100) : 0;
+            const totalProjetadoAnualPerc = percS1 + totalPlanejadoPercAnual;
+            const faltaParaMetaAnual = 100 - totalProjetadoAnualPerc;
+
+            if (meta2025 === 0) {
+                statusAnualEl.innerHTML = `<span class="text-indigo-300">--</span>`;
+            } else if (faltaParaMetaAnual <= 0) {
+                statusAnualEl.innerHTML = `<span class="text-green-400">Meta Anual Batida!</span> <p class="text-xs font-normal text-green-300">(${Math.round(totalProjetadoAnualPerc)}% projetado)</p>`;
+            } else {
+                statusAnualEl.innerHTML = `<span class="text-red-400">Faltam ${Math.round(faltaParaMetaAnual)}%</span> <p class="text-xs font-normal text-red-300">para a meta anual</p>`;
+            }
+
             salvarDados();
         }
 
